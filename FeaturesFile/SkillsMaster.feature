@@ -11,8 +11,13 @@ Scenario Outline: Verify GET for a Skill with specific ID
     Given Skills User is on Endpoint: url/Skills with valid username and password
     When User sends GET request on skill id from "<SheetName>" and <RowNumber>
     Then skills User validates the StatusCode and StatusMessage from "<SheetName>" sheet and <RowNumber> row
-    And JSON schema is valid for "<Method>" in Skills
-    And skills check the Database
+    And JSON schema is valid for GET with id in Skills
+    And skills check the Database with Skill id from "<SheetName>" and <RowNumber>
     Examples:
-        | SheetName  | RowNumber | Method |
-        | Skills_GET | 0         | GET    |
+        | SheetName  | RowNumber |
+        | Skills_GET | 0         |
+        | Skills_GET | 1         |
+        | Skills_GET | 2         |
+        | Skills_GET | 3         |
+        | Skills_GET | 4         |
+        | Skills_GET | 5         |
