@@ -85,14 +85,10 @@ def step_impl(context, SheetName, RowNumber):
         json_dic = json.loads(context.response.text)
 
 
-        for i in dbdf:
+        for key in dbdf.keys() & json_dic.keys():
+            if key in json_dic and dbdf:
+                assert json_dic[key] == dbdf[key]
 
-            new_dict=i
-            new_dict1 = dict((k.lower(),v) for k,v in new_dict.items())
-            json_dic1 = dict((k.lower(),v) for k,v in json_dic.items())
 
-            for key in new_dict1.keys() & json_dic1.keys():
-                if key in json_dic1 and new_dict1:
-                     assert json_dic1[key]==new_dict1[key]
 
 
