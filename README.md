@@ -1,4 +1,4 @@
-# LMS_Hackathon_Testing
+# LMS_Hackathon
 Code base for the implementation of Users, Skills, UserSkills and UserSkillsMapping APis for LMS.
 
 Pre-requisites - 
@@ -8,7 +8,6 @@ Python 3.10.x (3.9 should be ok) is installed
 LMS Database has been restored to postgreSQL
 
 Platform  - windows
-
 
 ***********************************************************************************************************************
 Before starting the Flask API server, we need to create a virtual environment in the project folder. This is done to install 
