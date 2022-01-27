@@ -1,13 +1,27 @@
-import requests as requests
+"""
+    Step definition SkillsMaster.py
+    -----------------
+    Contains the given, when, then step definitions for the endpoints /Skills and /Skills/<id>
+"""
 import json
+
 import pandas as pd
+import requests as requests
 from behave import *
 
-from utilFiles.Fetch_data_from_sql import get_data_from_DB
+from utilFiles.CONSTANTS import *
+from utilFiles.Fetch_data_from_sql import get_data_from_DB, get_deleted_data_from_DB
 from utilFiles.JSON_schema_validation import validate_json
 from utilFiles.fetch_data_from_property_file import readProperties
-from utilFiles.CONSTANTS import *
+
 use_step_matcher("re")
+
+"""
+    "Given" Step definition SkillsMaster.py
+    -----------------
+    This step is where the configuration details of the API /Skills are fetched
+"""
+
 @given("Skills User is on Endpoint: url/Skills with valid username and password")
 def step_impl(context):
     read_file = readProperties(CONFIG_PROPERTIES_FILE)
@@ -15,25 +29,26 @@ def step_impl(context):
     context.username = read_file.get(Username).data
     context.password = read_file[Pwd].data
 
+@given('Skills User with  username & password from "(?P<sheetName>.+)" and (?P<rowNumber>.+) is on Endpoint: url/Skills')
+def step_impl(context, sheetName, rowNumber):
+    skillsread_file = readProperties(SKILLS_PROPERTIES_FILE)
+    context.ExcelFilePath = skillsread_file.get(ExcelPath).data
+    data = pd.read_excel(context.ExcelFilePath, sheetName)
+    context.base_url = skillsread_file.get(URL).data
+    context.UserName = data[CONST_USER_NAME][int(rowNumber)]
+    context.Password = data[CONST_PASSWORD][int(rowNumber)]
+    context.StatusCode = data[CONST_STATUS_CODE][int(rowNumber)]
+    print("Authorization details:", type(context.UserName), context.Password)
+
+"""
+    "When" Step definition SkillsMaster.py
+    -----------------
+    This step sends requests to the /Skills API
+"""
 @when("skills User sends GET request")
 def step_impl(context):
-    context.response = requests.get(context.base_url+SKILLS_ENDPOINT, auth=(context.username, context.password))
+    context.response = requests.get(context.base_url+SKILLS_ENDPOINT, auth=(context.UserName, context.Password))
     print(context.response.text)
-
-@then("skills User validates StatusCode")
-def step_impl(context):
-    assert context.response.status_code == 200
-
-
-@step("skills JSON schema is valid")
-def step_impl(context):
-    # Convert json to python object.
-    jsonData = json.loads(context.response.text)
-    Newread_file = readProperties(SKILLS_PROPERTIES_FILE)
-    context.jsonFilePath=Newread_file.get(Skills_GET_Filepath).data
-    # validate it
-    is_valid, msg = validate_json(jsonData,context.jsonFilePath)
-    print(msg)
 
 
 @when('User sends GET request on skill id from "(?P<SheetName>.+)" and (?P<RowNumber>.+)')
@@ -47,14 +62,116 @@ def step_impl(context, SheetName, RowNumber):
     context.response = requests.get(context.base_url + SKILLS_ENDPOINT+"/"+str(context.Skill_ID), auth=(context.username, context.password))
     print(context.response.text)
 
+@when('skills User sends POST request body in skills from "(?P<SheetName>.+)" and (?P<RowNumber>.+) with valid JSON Schema')
+def step_impl(context, SheetName, RowNumber):
+    skillsread_file = readProperties(SKILLS_PROPERTIES_FILE)
+    context.ExcelFilePath = skillsread_file.get(ExcelPath).data
+    data = pd.read_excel(context.ExcelFilePath, SheetName)
+    context.Skill_name = data[CONST_SKILL_NAME][int(RowNumber)]
+    if context.Skill_name == 'true' or context.Skill_name == 'false':
+        context.Skill_name = bool(context.Skill_name)
+    elif type(context.Skill_name) == 'float':
+        context.Skill_name = str(context.Skill_name)
+    context.body = {CONST_SKILL_NAME: context.Skill_name}
+    context.StatusCode = data[CONST_STATUS_CODE][int(RowNumber)]
+    context.StatusMsg = data[CONST_STATUS_MESSAGE][int(RowNumber)]
+    context.response = requests.post(context.base_url + SKILLS_ENDPOINT, json=context.body,
+                                     auth=(context.username, context.password))
+
+    print(context.response.text)
+
+# This step is to verify if Request body of the POST method fails to accept Text format as input
+@when('skills User sends POST request body in text format skills from "(?P<sheetname1>.+)" and (?P<rownumber1>.+)')
+def step_impl(context, sheetname1, rownumber1):
+    skillsread_file = readProperties(SKILLS_PROPERTIES_FILE)
+    context.ExcelFilePath = skillsread_file.get(ExcelPath).data
+    data = pd.read_excel(context.ExcelFilePath, sheetname1)
+    context.Skill_name = data[CONST_SKILL_NAME][int(rownumber1)]
+    if context.Skill_name == 'true' or context.Skill_name == 'false':
+        context.Skill_name = bool(context.Skill_name)
+    context.body = {CONST_SKILL_NAME: context.Skill_name}
+    context.StatusCode = data[CONST_STATUS_CODE][int(rownumber1)]
+    context.StatusMsg = data[CONST_STATUS_MESSAGE][int(rownumber1)]
+    context.response = requests.post(context.base_url + SKILLS_ENDPOINT, context.body,
+                                     auth=(context.username, context.password))
+
+    print(context.response.text)
+
+@when('skills User sends PUT request on id and request body in skills from "(?P<SheetName>.+)" and (?P<RowNumber>.+) with valid JSON Schema')
+def step_impl(context, SheetName, RowNumber):
+    skillsread_file = readProperties(SKILLS_PROPERTIES_FILE)
+    context.ExcelFilePath = skillsread_file.get(ExcelPath).data
+    data = pd.read_excel(context.ExcelFilePath, SheetName)
+    context.Skill_ID = int(data[CONST_SKILL_ID][int(RowNumber)])
+    context.Skill_name = data[CONST_SKILL_NAME][int(RowNumber)]
+    print(int(context.Skill_ID), type(context.Skill_ID))
+    print(context.Skill_name)
+    if context.Skill_name == 'true' or context.Skill_name == 'false':
+        context.Skill_name = bool(context.Skill_name)
+    context.body = {CONST_SKILL_NAME: context.Skill_name}
+    context.StatusCode = data[CONST_STATUS_CODE][int(RowNumber)]
+    context.StatusMsg = data[CONST_STATUS_MESSAGE][int(RowNumber)]
+    context.response = requests.put(context.base_url + SKILLS_ENDPOINT + "/" + str(context.Skill_ID),
+                                    json=context.body, auth=(context.username, context.password))
+    print(context.response.text)
+
+
+@when('skills User sends DELETE skill id ON DELETE Method from "(?P<SheetName>.+)" and (?P<RowNumber>.+)')
+def step_impl(context, SheetName, RowNumber):
+    skillsread_file = readProperties(SKILLS_PROPERTIES_FILE)
+    context.ExcelFilePath = skillsread_file.get(ExcelPath).data
+    data = pd.read_excel(context.ExcelFilePath, SheetName)
+    context.Skill_ID = data[CONST_SKILL_ID][int(RowNumber)]
+    context.StatusCode = data[CONST_STATUS_CODE][int(RowNumber)]
+    context.StatusMsg = data[CONST_STATUS_MESSAGE][int(RowNumber)]
+    context.response = requests.delete(context.base_url + SKILLS_ENDPOINT + "/" + str(context.Skill_ID),
+                                       auth=(context.username, context.password))
+    print(context.response.text)
+
+"""
+    Then Step definition SkillsMaster.py
+    -----------------
+    This step verifies the StatusCode and StatusMessage of /Skills API
+"""
+
+@then("skills User validates StatusCode")
+def step_impl(context):
+    assert context.response.status_code == 200
+
+@then('skills User validates the StatusCode from "(?P<SheetName>.+)" sheet and (?P<RowNumber>.+) row')
+def step_impl(context, SheetName, RowNumber):
+    assert context.response.status_code == context.StatusCode
+
+
 @then('skills User validates the StatusCode and StatusMessage from "(?P<SheetName>.+)" sheet and (?P<RowNumber>.+) row')
 def step_impl(context, SheetName, RowNumber):
     assert context.response.status_code == context.StatusCode
     json_object = json.loads(context.response.text)
-
     if not (context.StatusCode == CONST_GET_SUCCESS_STATUS_CODE) or (
             context.StatusCode == CONST_POST_SUCCESS_STATUS_CODE):
-        assert context.StatusMsg == json_object["message"]
+       assert context.StatusMsg == json_object["message"]
+
+@then('skills User validates the StatusCode and the StatusMessage from "(?P<SheetName>.+)" sheet and (?P<RowNumber>.+) row')
+def step_impl(context, SheetName, RowNumber):
+    assert context.response.status_code == context.StatusCode
+    json_object = json.loads(context.response.text)
+    if (context.StatusCode == CONST_GET_SUCCESS_STATUS_CODE) or (
+            context.StatusCode == CONST_POST_SUCCESS_STATUS_CODE):
+       assert context.StatusMsg == json_object["message"]
+
+"""
+    The Following Steps are to validate the JSON schema response of GET/GET ID/POST/PUT methods
+"""
+
+@step("skills JSON schema is valid")
+def step_impl(context):
+    # Convert json to python object.
+    jsonData = json.loads(context.response.text)
+    Newread_file = readProperties(SKILLS_PROPERTIES_FILE)
+    context.jsonFilePath=Newread_file.get(Skills_GET_Filepath).data
+    # validate it
+    is_valid, msg = validate_json(jsonData,context.jsonFilePath)
+    print(msg)
 
 
 @step('JSON schema is valid for GET with id in Skills')
@@ -68,7 +185,35 @@ def step_impl(context):
         is_valid, msg = validate_json(jsonData, context.jsonFilePath)
         print(msg)
 
+@step("JSON schema is valid for POST/PUT METHOD in Skills")
+def step_impl(context):
+    if (context.StatusCode == CONST_GET_SUCCESS_STATUS_CODE) or (context.StatusCode == CONST_POST_SUCCESS_STATUS_CODE):
+        jsonData = json.loads(context.response.text)
+        print("jsonData:",jsonData)
+        Newread_file = readProperties(SKILLS_PROPERTIES_FILE)
+        context.jsonFilePath = Newread_file.get(Skills_POST_Filepath).data
 
+        # validate it
+        is_valid, msg = validate_json(jsonData, context.jsonFilePath)
+        print(msg)
+
+
+@step('skills User should receive the skill in JSON body from "(?P<SheetName>.+)" and (?P<RowNumber>.+)')
+def step_impl(context, SheetName, RowNumber):
+    if (context.StatusCode == CONST_GET_SUCCESS_STATUS_CODE) or (context.StatusCode == CONST_POST_SUCCESS_STATUS_CODE):
+         print("Response:", context.response.text)
+         Newread_file = readProperties(SKILLS_PROPERTIES_FILE)
+         context.ExcelFilePath = Newread_file.get(ExcelPath).data
+         data = pd.read_excel(context.ExcelFilePath, SheetName)
+         context.Skill_name = data[CONST_SKILL_NAME][int(RowNumber)]
+         jsonData = json.loads(context.response.text)
+         print("Response body Skill_name", jsonData[CONST_SKILL_NAME])
+         print("Context skill name", context.Skill_name)
+         assert jsonData[CONST_SKILL_NAME] == context.Skill_name
+
+"""
+    The Following Steps are to DB Validation of GET ID/POST/PUT/DELETE methods
+"""
 
 
 
@@ -89,6 +234,47 @@ def step_impl(context, SheetName, RowNumber):
             if key in json_dic and dbdf:
                 assert json_dic[key] == dbdf[key]
 
+@step('skills check the Database with Skill id for POST/PUT from "(?P<IDsheetName>.+)" and (?P<RowNumber>.+)')
+def step_impl(context, IDsheetName, RowNumber):
+    if (context.StatusCode == CONST_GET_SUCCESS_STATUS_CODE) or (context.StatusCode == CONST_POST_SUCCESS_STATUS_CODE):
+        read_file = readProperties(CONFIG_PROPERTIES_FILE)
+        context.dbHostname = read_file.get(dbHostname).data
+        context.dbName = read_file.get(dbName).data
+        context.dbUsername = read_file.get(dbUsername).data
+        context.dbPassword = read_file.get(dbPassword).data
+        json_dic = json.loads(context.response.text)
+        context.Query = "select skill_id,skill_name from tbl_lms_skill_master where skill_id='" + str(
+            json_dic[CONST_SKILL_ID]) + "'"
 
+        dbdf = get_data_from_DB(context.dbHostname, context.dbName, context.dbUsername, context.dbPassword,
+                                context.Query)
+
+        for key in dbdf.keys() & json_dic.keys():
+            if key in json_dic and dbdf:
+                assert json_dic[key] == dbdf[key]
+
+
+
+
+
+
+@step('skills User checks the Database to validate deletion from "(?P<IDsheetName>.+)" sheet and (?P<RowNumber>.+) row')
+def step_impl(context, IDsheetName, RowNumber):
+    if (context.StatusCode == CONST_GET_SUCCESS_STATUS_CODE) or (context.StatusCode == CONST_POST_SUCCESS_STATUS_CODE):
+        read_file = readProperties(CONFIG_PROPERTIES_FILE)
+        context.dbHostname = read_file.get(dbHostname).data
+        context.dbName = read_file.get(dbName).data
+        context.dbUsername = read_file.get(dbUsername).data
+        context.dbPassword = read_file.get(dbPassword).data
+        context.Query = "SELECT EXISTS(SELECT * FROM tbl_lms_skill_master WHERE skill_id='" + str(context.Skill_ID)+"'" + ")"
+
+        dbdf = get_deleted_data_from_DB(context.dbHostname, context.dbName, context.dbUsername, context.dbPassword,
+                            context.Query)
+
+        if dbdf['exists']:
+           print("Deletion incomplete")
+
+        else:
+           print("Successfully deleted")
 
 
