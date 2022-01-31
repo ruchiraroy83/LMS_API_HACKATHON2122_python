@@ -6,9 +6,9 @@ def get_data_from_DB(strhostname, strDatabase, strUser, strPassword, strQuery):
     cursor = conn.cursor()
     cursor.execute(strQuery)
     headers = [i[0] for i in cursor.description]
-    print("headers",headers)
+    print("headers", headers)
     resultSet = cursor.fetchall()
-    print("resultSet",resultSet)
+    print("resultSet", resultSet)
     for result in resultSet:
         result = list(result)
         dictionary = dict(zip(headers, result))

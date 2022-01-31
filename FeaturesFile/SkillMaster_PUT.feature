@@ -8,7 +8,7 @@ Scenario Outline: Verify PUT for a Skill when user logged with UserName with Pas
     Then skills User validates the StatusCode and StatusMessage from "<SheetName>" sheet and <RowNumber> row
     And JSON schema is valid for POST/PUT METHOD in Skills
     And skills User should receive the skill in JSON body from "<SheetName>" and <RowNumber>
-    And skills check the Database with Skill id for POST/PUT from "<SheetName>" and <RowNumber>
+    And skills check the Database with Skill id from "<SheetName>" and <RowNumber>
     Examples:
       | SheetName  | RowNumber |
       | Skills_PUT | 0         |
@@ -18,6 +18,6 @@ Scenario Outline: Verify PUT for a Skill when user logged with UserName with Pas
       | Skills_PUT | 4         |
       | Skills_PUT | 5         |
       | Skills_PUT | 6         |
-
+	  | Skills_PUT | 7         |
 
 

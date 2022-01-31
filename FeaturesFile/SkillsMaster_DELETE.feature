@@ -5,12 +5,12 @@ Background:
 Scenario Outline: Validate DELETE Skills when user logged with UserName with Password
     When skills User sends DELETE skill id ON DELETE Method from "<SheetName>" and <RowNumber>
     Then skills User validates the StatusCode and the StatusMessage from "<SheetName>" sheet and <RowNumber> row
-    And  skills User checks the Database to validate deletion from "<IDsheetName>" sheet and <RowNumber> row
+    And  skills User checks the Database to validate deletion from "<SheetName>" sheet and <RowNumber> row
 
     Examples:
-        | SheetName     | RowNumber | IDsheetName   |
-        | Skills_DELETE | 0         | Skills_DELETE |
-        | Skills_DELETE | 1         | Skills_DELETE |
-        | Skills_DELETE | 2         | Skills_DELETE |
-        | Skills_DELETE | 3         | Skills_DELETE |
-        | Skills_DELETE | 4         | Skills_DELETE |
+        | SheetName     | RowNumber |
+        | Skills_DELETE | 0         |
+        | Skills_DELETE | 1         |
+        | Skills_DELETE | 2         |
+        | Skills_DELETE | 3         |
+        | Skills_DELETE | 4         |
